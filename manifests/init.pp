@@ -24,17 +24,17 @@ class postgres {
 
   user { 'postgres':
     shell => '/bin/bash',
-          ensure => 'present',
-          comment => 'PostgreSQL Server',
-          uid => '26',
-          gid => '26',
-          home => '/var/lib/pgsql',
-          password => '!!',
+    ensure => 'present',
+    comment => 'PostgreSQL Server',
+    uid => '26',
+    gid => '26',
+    home => '/var/lib/pgsql',
+    password => '!!',
   }
 
   group { 'postgres':
     ensure => 'present',
-           gid => '26'
+    gid => '26'
   }
 
 }
@@ -104,7 +104,7 @@ define postgres::createuser($passwd) {
     database => "postgres",
     sql      => "CREATE ROLE ${name} WITH LOGIN PASSWORD '${passwd}';",
     sqlcheck => "\"SELECT usename FROM pg_user WHERE usename = '${name}'\" | grep ${name}",
-    require  =>  [Service[postgresql]],
+    require  =>  [Service[postgresql],Exec["InitDB"]],
   }
 }
 
@@ -116,6 +116,6 @@ define postgres::createdb($owner) {
     database => "postgres",
     sql => "CREATE DATABASE $name WITH OWNER = $owner ENCODING = 'UTF8';",
     sqlcheck => "\"SELECT datname FROM pg_database WHERE datname ='$name'\" | grep $name",
-    require => [Service[postgresql],Sqlexec[createuser]],
+    require => [Service[postgresql],Sqlexec[createuser],Exec["InitDB"]],
   }
 }
