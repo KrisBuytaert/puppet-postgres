@@ -103,12 +103,21 @@ define postgres::config ($listen="localhost")  {
 
 # Base SQL exec
 define sqlexec($username, $password, $database, $sql, $sqlcheck) {
-  exec{ "psql -h localhost --username=${username} $database -c \"${sql}\" >> /var/lib/puppet/log/postgresql.sql.log 2>&1 && /bin/sleep 5":
-    environment => "PGPASSWORD=${postgres_password}",
-    path        => $path,
-    timeout     => 600,
-    unless      => "psql -U $username $database -c $sqlcheck",
-    require =>  [User['postgres'],Service[postgresql]],
+  if $postgres_password == "" {
+    exec{ "psql -h localhost --username=${username} $database -c \"${sql}\" >> /var/lib/puppet/log/postgresql.sql.log 2>&1 && /bin/sleep 5":
+      path        => $path,
+      timeout     => 600,
+      unless      => "psql -U $username $database -c $sqlcheck",
+      require =>  [User['postgres'],Service[postgresql]],
+    }
+  } else {
+    exec{ "psql -h localhost --username=${username} $database -c \"${sql}\" >> /var/lib/puppet/log/postgresql.sql.log 2>&1 && /bin/sleep 5":
+      environment => "PGPASSWORD=${postgres_password}",
+      path        => $path,
+      timeout     => 600,
+      unless      => "psql -U $username $database -c $sqlcheck",
+      require =>  [User['postgres'],Service[postgresql]],
+    }
   }
 }
 
