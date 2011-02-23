@@ -64,12 +64,17 @@
 # TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
 
 # "local" is for Unix domain socket connections only
+<% if postgres_password != "" %>
 local   all         all                               password
 # IPv4 local connections:
 host    all         all         127.0.0.1/32          password
 # IPv6 local connections:
 host    all         all         ::1/128               password
-
+<% else %>
+local   all       all                               trust
+host    all       all         127.0.0.1/32          trust
+host    all       all         ::1/128               trust
+<% end %>
 
 <% allowedrules.each do |rule| -%><%= rule %>
 <% end -%>

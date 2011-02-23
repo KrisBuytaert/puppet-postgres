@@ -15,9 +15,10 @@ class postgres {
   # Common stuff, like ensuring postgres_password defined in site.pp
   include postgres::common
 
-  # TODO: Handle version specified somewhere
+  # Handle version specified in site.pp (or default to postgresql) 
   $postgres_client = "postgresql${postgres_version}"
   $postgres_server = "postgresql${postgres_version}-server"
+
   package { [$postgres_client, $postgres_server]: 
     ensure => installed,
   }
@@ -41,17 +42,30 @@ class postgres {
 
 # Initialize the database with the postgres_password password.
 define postgres::initdb {
-  exec {
-    "InitDB":
-      command => "echo \"${postgres_password}\" > /tmp/ps && /bin/su  postgres -c \"/usr/bin/initdb /var/lib/pgsql/data --auth='password' --pwfile=/tmp/ps -E UTF8 \" && rm -rf /tmp/ps",
-              require =>  User['postgres'],
-              unless => "/usr/bin/test -e /var/lib/pgsql/data/postmaster.opts",
-
-  }
-
-  # Ugly hack to make sure initb runs before the hba and conf file are placed there . 
-  file {  "/var/lib/pgsql/.order":
-    ensure => present,
+  if $postgres_password == "" {
+    exec {
+        "InitDB":
+          command => "/bin/su  postgres -c \"/usr/bin/initdb /var/lib/pgsql/data -E UTF8\"",
+          require =>  [User['postgres'],Package["postgresql${postgres_version}-server"]],
+          unless => "/usr/bin/test -e /var/lib/pgsql/data/postmaster.opts",
+    }
+    # Ugly hack to make sure initb runs before the hba and conf file are placed there . 
+    file {  "/var/lib/pgsql/.order":
+      ensure => present,
+      require => Package["postgresql${postgres_version}-server"],
+    }
+  } else {
+    exec {
+        "InitDB":
+          command => "echo \"${postgres_password}\" > /tmp/ps && /bin/su  postgres -c \"/usr/bin/initdb /var/lib/pgsql/data --auth='password' --pwfile=/tmp/ps -E UTF8 \" && rm -rf /tmp/ps",
+          require =>  [User['postgres'],Package["postgresql${postgres_version}-server"]],
+          unless => "/usr/bin/test -e /var/lib/pgsql/data/postmaster.opts",
+    }
+    # Ugly hack to make sure initb runs before the hba and conf file are placed there . 
+    file {  "/var/lib/pgsql/.order":
+      ensure => present,
+      require => Package["postgresql${postgres_version}-server"],
+    }
   }
 }
 
@@ -61,6 +75,7 @@ define postgres::enable {
     ensure => running,
     enable => true,
     hasstatus => true,
+    require => File["/var/lib/pgsql/.order"],
   }
 }
 
@@ -92,7 +107,8 @@ define sqlexec($username, $password, $database, $sql, $sqlcheck) {
     environment => "PGPASSWORD=${postgres_password}",
     path        => $path,
     timeout     => 600,
-    unless      => "psql -U $username $database -c $sqlcheck"
+    unless      => "psql -U $username $database -c $sqlcheck",
+    require =>  [User['postgres'],Service[postgresql]],
   }
 }
 
@@ -104,7 +120,7 @@ define postgres::createuser($passwd) {
     database => "postgres",
     sql      => "CREATE ROLE ${name} WITH LOGIN PASSWORD '${passwd}';",
     sqlcheck => "\"SELECT usename FROM pg_user WHERE usename = '${name}'\" | grep ${name}",
-    require  =>  [Service[postgresql],Exec["InitDB"]],
+    require  =>  Service[postgresql],
   }
 }
 
@@ -116,6 +132,6 @@ define postgres::createdb($owner) {
     database => "postgres",
     sql => "CREATE DATABASE $name WITH OWNER = $owner ENCODING = 'UTF8';",
     sqlcheck => "\"SELECT datname FROM pg_database WHERE datname ='$name'\" | grep $name",
-    require => [Service[postgresql],Sqlexec[createuser],Exec["InitDB"]],
+    require => Service[postgresql],
   }
 }
