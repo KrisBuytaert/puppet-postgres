@@ -2,7 +2,7 @@ postgres
 
 This is the postgres module.
 
-All bugs produced by Kris Buytaert 
+All bugs produced by Kris Buytaert .
 
 Init the database before you start configuring files as once hba files etc exists in /var/lib/pgsql/data the initial database creation won't work anymore .
 
