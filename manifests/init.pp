@@ -81,7 +81,7 @@ define postgres::enable {
 
 
 # Postgres host based authentication 
-define postgres::hba ($allowedrules){
+define postgres::hba ($postgres_password="",$allowedrules){
   file { "/var/lib/pgsql/data/pg_hba.conf":
     content => template("postgres/pg_hba.conf.erb"),	
     owner  => "root",
