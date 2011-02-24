@@ -30,6 +30,7 @@ class postgres {
     uid => '26',
     gid => '26',
     home => '/var/lib/pgsql',
+    managehome => true,
     password => '!!',
   }
 
@@ -41,30 +42,20 @@ class postgres {
 }
 
 # Initialize the database with the postgres_password password.
-define postgres::initdb {
+define postgres::initdb() {
   if $postgres_password == "" {
     exec {
         "InitDB":
-          command => "/bin/su  postgres -c \"/usr/bin/initdb /var/lib/pgsql/data -E UTF8\"",
+          command => "/bin/chown postgres.postgres /var/lib/pgsql && /bin/su  postgres -c \"/usr/bin/initdb /var/lib/pgsql/data -E UTF8\"",
           require =>  [User['postgres'],Package["postgresql${postgres_version}-server"]],
-          unless => "/usr/bin/test -e /var/lib/pgsql/data/postmaster.opts",
-    }
-    # Ugly hack to make sure initb runs before the hba and conf file are placed there . 
-    file {  "/var/lib/pgsql/.order":
-      ensure => present,
-      require => Package["postgresql${postgres_version}-server"],
+          unless => "/usr/bin/test -e /var/lib/pgsql/data/PG_VERSION",
     }
   } else {
     exec {
         "InitDB":
-          command => "echo \"${postgres_password}\" > /tmp/ps && /bin/su  postgres -c \"/usr/bin/initdb /var/lib/pgsql/data --auth='password' --pwfile=/tmp/ps -E UTF8 \" && rm -rf /tmp/ps",
+          command => "/bin/chown postgres.postgres /var/lib/pgsql && echo \"${postgres_password}\" > /tmp/ps && /bin/su  postgres -c \"/usr/bin/initdb /var/lib/pgsql/data --auth='password' --pwfile=/tmp/ps -E UTF8 \" && rm -rf /tmp/ps",
           require =>  [User['postgres'],Package["postgresql${postgres_version}-server"]],
-          unless => "/usr/bin/test -e /var/lib/pgsql/data/postmaster.opts",
-    }
-    # Ugly hack to make sure initb runs before the hba and conf file are placed there . 
-    file {  "/var/lib/pgsql/.order":
-      ensure => present,
-      require => Package["postgresql${postgres_version}-server"],
+          unless => "/usr/bin/test -e /var/lib/pgsql/data/PG_VERSION ",
     }
   }
 }
@@ -75,7 +66,7 @@ define postgres::enable {
     ensure => running,
     enable => true,
     hasstatus => true,
-    require => File["/var/lib/pgsql/.order"],
+    require => Exec["InitDB"],
   }
 }
 
@@ -87,7 +78,8 @@ define postgres::hba ($postgres_password="",$allowedrules){
     owner  => "root",
     group  => "root",
     notify => Service["postgresql"],
-    require => File["/var/lib/pgsql/.order"],
+ #   require => File["/var/lib/pgsql/.order"],
+    require => Exec["InitDB"],
   }
 }
 
@@ -97,7 +89,8 @@ define postgres::config ($listen="localhost")  {
     owner => postgres,
     group => postgres,
     notify => Service["postgresql"],
-    require => File["/var/lib/pgsql/.order"],
+  #  require => File["/var/lib/pgsql/.order"],
+    require => Exec["InitDB"],
   }
 }
 
