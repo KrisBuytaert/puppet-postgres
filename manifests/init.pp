@@ -12,7 +12,7 @@
 #
 # [Remember: No empty lines between comments and class definition]
 class postgres($version = '8.4', $password = '') {
-  # Handle version specified in site.pp (or default to postgresql) 
+  # Handle version specified in site.pp (or default to postgresql)
   $postgres_client = "postgresql-client-${version}"
   $postgres_server = "postgresql-${version}"
 
@@ -63,10 +63,10 @@ define postgres::enable {
 }
 
 
-# Postgres host based authentication 
+# Postgres host based authentication
 define postgres::hba ($password="",$allowedrules){
   file { "/var/lib/pgsql/data/pg_hba.conf":
-    content   => template("postgres/pg_hba.conf.erb"),	
+    content   => template("postgres/pg_hba.conf.erb"),
     owner     => "root",
     group     => "root",
     notify    => Service["postgresql"],
@@ -109,7 +109,7 @@ define sqlexec($username, $password, $database, $sql, $sqlcheck) {
 # Create a Postgres user
 define postgres::createuser($passwd) {
   sqlexec{ createuser:
-    password => $password, 
+    password => $password,
     username => "postgres",
     database => "postgres",
     sql      => "CREATE ROLE ${name} WITH LOGIN PASSWORD '${passwd}';",
@@ -121,7 +121,7 @@ define postgres::createuser($passwd) {
 # Create a Postgres db
 define postgres::createdb($owner) {
   sqlexec{ $name:
-    password => $password, 
+    password => $password,
     username => "postgres",
     database => "postgres",
     sql      => "CREATE DATABASE $name WITH OWNER = $owner ENCODING = 'UTF8';",
