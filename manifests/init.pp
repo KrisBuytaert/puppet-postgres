@@ -80,7 +80,7 @@ define postgres::config ($listen="localhost")  {
     content => template("postgres/postgresql.conf.erb"),
     owner   => postgres,
     group   => postgres,
-    notify => Service["postgresql"],
+    notify  => Service["postgresql"],
     # require => File["/var/lib/pgsql/.order"],
     require => Exec["InitDB"],
   }
