@@ -11,7 +11,7 @@
 # Sample Usage: see postgres/README.markdown
 #
 # [Remember: No empty lines between comments and class definition]
-class postgres($version = '8.4', $password = '') {
+class postgres($version = '9.0', $short_version = '90', $password = '') {
   # Handle version specified in site.pp (or default to postgresql)
   $postgres_client = "postgresql-client-${version}"
   $postgres_server = "postgresql-${version}"
@@ -21,6 +21,13 @@ class postgres($version = '8.4', $password = '') {
       class {
         'postgres::debian' :
           version => $version;
+      }
+    }
+    CentOS: {
+      class {
+        'postgres::centos' :
+          version       => $version,
+          short_version => $short_version,
       }
     }
     default: {
