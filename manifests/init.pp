@@ -11,7 +11,12 @@
 # Sample Usage: see postgres/README.markdown
 #
 # [Remember: No empty lines between comments and class definition]
-class postgres($version = '9.0', $short_version = '90', $password = '') {
+class postgres(
+  $version = '9.0',
+  $short_version = '90',
+  $password = '',
+  $running_ip = '127.0.0.1',
+) {
   # Handle version specified in site.pp (or default to postgresql)
   $postgres_client = "postgresql-client-${version}"
   $postgres_server = "postgresql-${version}"
