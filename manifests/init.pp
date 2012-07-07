@@ -118,6 +118,7 @@ define sqlexec($username, $password, $database, $sql, $sqlcheck, $host="localhos
 # Create a Postgres user
 define postgres::createuser($passwd, $host, $password) {
   sqlexec{ "Create User $name":
+    host     => $host,
     password => $password,
     username => "postgres",
     database => "postgres",
@@ -139,8 +140,9 @@ define postgres::createsuperuser($passwd, $host, $password) {
 }
 
 # Create a Postgres db
-define postgres::createdb($owner, $password) {
+define postgres::createdb($owner, $password, $host) {
   sqlexec{ "Create DB $name":
+    host     => $host,
     password => $password,
     username => "postgres",
     database => "postgres",
