@@ -66,11 +66,9 @@ define postgres::initdb($version = "9.0", $short_version = "90", $password = "")
 
 # Start the service if not running
 define postgres::enable ($version="9.0") {
-  $service_name = "postgresql"
-
   case $operatingsystem {
     CentOS: {
-        $service_name = "postgresql-$version"
+      $service_name = "postgresql-$version"
     }
     default: {
       $service_name = "postgresql"
