@@ -1,4 +1,11 @@
-class postgres::firstsync ($version = "9.0", $remotehost, $password) {
+# == Class: postgres::firstsync
+#
+# This class initializes the first sync of postgres
+class postgres::firstsync (
+  $version    = '9.0',
+  $remotehost = undef,
+  $password   = undef
+) {
   Exec{logoutput => true}
   exec {
     'sync-ssh-keys':
